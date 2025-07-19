@@ -251,10 +251,10 @@
 
         const settings = {
             'tk': { max: 10, ops: ['addition', 'subtraction'] },
-            '1': { max: 20, multMax: 2, ops: ['addition', 'subtraction', 'story_problem'] },
-            '2': { max: 50, multMax: 5, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed', 'story_problem'] },
-            '3': { max: 100, multMax: 10, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed', 'story_problem'] },
-            '4': { max: 250, multMax: 12, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed', 'story_problem'] }
+            '1': { max: 20, multMax: 2, ops: ['addition', 'subtraction', 'story_problem', 'pattern_recognition'] },
+            '2': { max: 50, multMax: 5, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed', 'story_problem', 'pattern_recognition'] },
+            '3': { max: 100, multMax: 10, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed', 'story_problem', 'pattern_recognition'] },
+            '4': { max: 250, multMax: 12, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed', 'story_problem', 'pattern_recognition'] }
         };
         
         const operationLabels = {
@@ -264,7 +264,8 @@
             division: 'Pembagian (÷)',
             mixed: 'Semua Operasi Hitungan',
             complex_mixed: 'Operasi Campuran',
-            story_problem: 'Soal Cerita'
+            story_problem: 'Soal Cerita',
+            pattern_recognition: 'Pengenalan Pola'
         };
 
         // --- Screen Management ---
@@ -286,7 +287,7 @@
             timerDotsContainer.innerHTML = '';
             if (currentGrade === 'tk') return;
 
-            const timeLimit = currentOperation === 'complex_mixed' || currentOperation === 'story_problem' ? 20 : 10;
+            const timeLimit = ['complex_mixed', 'story_problem', 'pattern_recognition'].includes(currentOperation) ? 20 : 10;
 
             for (let i = 0; i < timeLimit; i++) {
                 const dot = document.createElement('div');
@@ -311,9 +312,8 @@
             }, 1000);
         }
 
-        // --- Story Problem Bank ---
+        // --- Question Banks ---
         const storyProblemBank = [
-            // Grade 1-2: Simple, 1 operation
             (grade) => {
                 if (grade > 2) return null;
                 const names = ["Adi", "Bela", "Ciko", "Dina"];
@@ -336,7 +336,6 @@
                     answer: num1 - num2
                 };
             },
-            // Grade 3-4: Complex, 2-3 operations
             (grade) => {
                 if (grade < 3) return null;
                 const num1 = getRandomInt(10, 20);
@@ -358,18 +357,57 @@
                 };
             },
              (grade) => {
-                if (grade < 4) return null; // Even harder, for grade 4
+                if (grade < 4) return null;
                 const redMarbles = getRandomInt(10, 20);
                 const blueMarbles = getRandomInt(10, 20);
                 const numFriends = getRandomInt(3, 5);
                 const totalMarbles = redMarbles + blueMarbles;
-                // Ensure total is divisible
                 const remainder = totalMarbles % numFriends;
                 const finalTotal = totalMarbles - remainder;
 
                 return {
                     question: `Ada ${redMarbles} kelereng merah dan ${blueMarbles - remainder} kelereng biru. Semua kelereng itu akan dibagikan sama rata kepada ${numFriends} anak. Berapa kelereng yang didapat setiap anak?`,
                     answer: finalTotal / numFriends
+                };
+            }
+        ];
+        
+        const patternBank = [
+            (grade) => { // Penambahan
+                const start = getRandomInt(1, grade * 3);
+                const step = getRandomInt(1, grade + 2);
+                const sequence = [start, start + step, start + (step * 2)];
+                return {
+                    question: `Lanjutkan pola: ${sequence.join(', ')}, ...?`,
+                    answer: start + (step * 3)
+                };
+            },
+            (grade) => { // Pengurangan
+                const step = getRandomInt(1, grade + 2);
+                const start = getRandomInt(step * 4, grade * 5 + step * 4);
+                const sequence = [start, start - step, start - (step * 2)];
+                return {
+                    question: `Lanjutkan pola: ${sequence.join(', ')}, ...?`,
+                    answer: start - (step * 3)
+                };
+            },
+            (grade) => { // Perkalian
+                if (grade < 2) return null;
+                const base = getRandomInt(2, grade + 1);
+                const sequence = [base, base * 2, base * 3];
+                return {
+                    question: `Lanjutkan pola: ${sequence.join(', ')}, ...?`,
+                    answer: base * 4
+                };
+            },
+            (grade) => { // Pembagian
+                if (grade < 3) return null;
+                const divisor = getRandomInt(2, 3);
+                const start = divisor * divisor * divisor * getRandomInt(1, 3);
+                const sequence = [start, start / divisor, start / (divisor*divisor)];
+                return {
+                    question: `Lanjutkan pola: ${sequence.join(', ')}, ...?`,
+                    answer: start / (divisor*divisor*divisor)
                 };
             }
         ];
@@ -391,36 +429,42 @@
             feedbackMessage.textContent = '';
             answerInput.focus();
             
-            questionTextEl.className = 'question-display'; // Reset class
+            questionTextEl.className = 'question-display';
             answerLabelEl.textContent = "";
             questionContainer.className = 'min-h-[100px] flex items-center justify-center';
-
 
             const level = settings[currentGrade];
             let operation = currentOperation;
             if (operation === 'mixed') {
-                const availableOps = level.ops.filter(op => !['mixed', 'complex_mixed', 'story_problem'].includes(op));
+                const availableOps = level.ops.filter(op => !['mixed', 'complex_mixed', 'story_problem', 'pattern_recognition'].includes(op));
                 operation = pickRandom(availableOps);
             }
             
             let questionString = '';
             switch (operation) {
+                case 'pattern_recognition':
+                    questionTextEl.className = 'question-text-story';
+                    answerLabelEl.textContent = "Jawaban:";
+                    questionContainer.className = 'bg-gray-50 p-4 rounded-lg min-h-[100px] flex items-center justify-center';
+                    const availablePatterns = patternBank.filter(gen => gen(parseInt(currentGrade)) !== null);
+                    const patternGenerator = pickRandom(availablePatterns);
+                    const patternQuestion = patternGenerator(parseInt(currentGrade));
+                    questionString = patternQuestion.question;
+                    correctAnswer = patternQuestion.answer;
+                    break;
                 case 'story_problem':
                     questionTextEl.className = 'question-text-story';
                     answerLabelEl.textContent = "Jawaban:";
                     questionContainer.className = 'bg-gray-50 p-4 rounded-lg min-h-[100px] flex items-center justify-center';
-                    
                     const availableGenerators = storyProblemBank.filter(gen => gen(parseInt(currentGrade)) !== null);
                     const generator = pickRandom(availableGenerators);
                     const storyQuestion = generator(parseInt(currentGrade));
-                    
                     questionString = storyQuestion.question;
                     correctAnswer = storyQuestion.answer;
                     break;
                 case 'complex_mixed':
                     const formatType = getRandomInt(1, 2);
                     let numA, numB, numC;
-
                     if (formatType === 1) {
                         if (currentGrade === '2') {
                             numA = getRandomInt(5, 20); numB = getRandomInt(2, 4); numC = getRandomInt(2, 5);
@@ -459,7 +503,7 @@
                     break;
             }
             questionTextEl.textContent = questionString;
-            if (operation !== 'story_problem') {
+            if (!['story_problem', 'pattern_recognition'].includes(operation)) {
                 questionTextEl.innerHTML += ` <span class="question-display">=</span>`;
             }
             startTimer();
@@ -569,15 +613,12 @@
             generateQuestion();
         }
 
-        // UPDATED: Function to dynamically populate options
         function updateOperationOptions() {
             const selectedGrade = gradeSelect.value;
             const availableOps = settings[selectedGrade].ops;
             
-            // Clear current options
             operationSelect.innerHTML = '';
 
-            // Populate with available options
             availableOps.forEach(opKey => {
                 const option = document.createElement('option');
                 option.value = opKey;
