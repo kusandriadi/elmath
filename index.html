@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayo Belajar Berhitung!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Pustaka untuk efek suara -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .card {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            transition: all 0.3s ease-in-out;
+            width: 100%;
+            max-width: 95vw;
+        }
+        @media (min-width: 640px) {
+            .card {
+                max-width: 512px;
+            }
+            .card-lg {
+                 max-width: 640px;
+            }
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+        .btn-submit {
+            background-color: #22c55e;
+            color: white;
+            font-weight: bold;
+            border-radius: 0.75rem;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .btn-submit:hover {
+            background-color: #16a34a;
+            transform: scale(1.05);
+        }
+        .form-select {
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+        }
+        .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        .form-select option:disabled { color: #9ca3af; }
+        .question-display { font-size: 2.5rem; sm:font-size: 3rem; font-weight: 700; color: #1f2937; }
+        .answer-input {
+            font-size: 2.5rem;
+            font-weight: 600;
+            text-align: center;
+            border-radius: 1rem;
+            border: 2px solid #9ca3af;
+            transition: all 0.3s ease-in-out;
+            width: 120px;
+        }
+        .answer-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+        }
+        .answer-input.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; }
+        .answer-input.incorrect { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; }
+        .feedback-message { min-height: 1.5rem; }
+
+        #orientation-lock {
+            display: none;
+        }
+        @media only screen and (max-device-width: 1024px) and (orientation: portrait) {
+            #app-container {
+                display: none;
+            }
+            #orientation-lock {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+<body class="bg-sky-100">
+
+    <div id="orientation-lock" class="fixed inset-0 z-50 flex-col items-center justify-center text-center p-4 bg-white">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500 mb-4"><rect x="2" y="6" width="20" height="12" rx="2"></rect></svg>
+        <h2 class="text-xl font-semibold text-gray-800">Harap Putar Perangkat Anda</h2>
+        <p class="text-gray-600 mt-2">Gunakan mode lanskap (mendatar) untuk pengalaman terbaik.</p>
+    </div>
+
+    <div id="app-container" class="flex items-center justify-center min-h-screen p-4">
+
+        <!-- Setup Screen -->
+        <div id="setup-screen" class="card text-center mx-auto">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Selamat Datang!</h1>
+            <p class="text-gray-600 mb-8">Pilih jenjang kelas dan latihan yang kamu mau.</p>
+            <div class="space-y-6">
+                <div>
+                    <label for="grade-select" class="block text-left font-semibold text-gray-700 mb-2">Pilih Kelas:</label>
+                    <select id="grade-select" class="form-select w-full">
+                        <option value="tk">TK Besar</option>
+                        <option value="1">Kelas 1 SD</option>
+                        <option value="2">Kelas 2 SD</option>
+                        <option value="3">Kelas 3 SD</option>
+                        <option value="4">Kelas 4 SD</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="operation-select" class="block text-left font-semibold text-gray-700 mb-2">Pilih Operasi Hitung:</label>
+                    <select id="operation-select" class="form-select w-full">
+                        <option value="addition">Penambahan (+)</option>
+                        <option value="subtraction">Pengurangan (-)</option>
+                        <option value="multiplication">Perkalian (×)</option>
+                        <option value="division">Pembagian (÷)</option>
+                        <option value="mixed">Semua Operasi Hitungan</option>
+                        <option value="complex_mixed">Operasi Campuran</option>
+                    </select>
+                </div>
+            </div>
+            <button id="start-button" class="btn-primary w-full mt-10">Mulai Belajar</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden card card-lg text-center mx-auto">
+            <div class="flex justify-between items-center mb-4">
+                <div id="level-info" class="text-left text-sm text-gray-500"></div>
+                <div id="game-stats" class="text-right text-sm font-semibold text-gray-700">
+                    <span id="question-counter"></span>
+                </div>
+            </div>
+            <div id="timer-dots-container" class="flex justify-center flex-wrap space-x-2 mb-6" style="min-height: 16px;"></div>
+            <div class="flex items-center justify-center space-x-2 sm:space-x-4 md:space-x-6 mb-6">
+                <span id="question-text" class="question-display"></span>
+                <span class="question-display">=</span>
+                <input type="text" id="answer-input" class="answer-input p-2" autofocus inputmode="numeric">
+                <button id="submit-button" class="btn-submit">✓</button>
+            </div>
+            <p id="feedback-message" class="feedback-message text-red-600 font-semibold mt-4"></p>
+            <button id="back-button" class="mt-6 text-sm font-semibold text-blue-600 hover:text-blue-800">← Kembali ke Menu</button>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="hidden card text-center mx-auto">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Latihan Selesai!</h2>
+            <p class="text-gray-600 mb-2">Skor Kamu:</p>
+            <p id="final-score" class="text-6xl font-bold text-blue-600 mb-6"></p>
+            <p id="final-message" class="text-lg text-gray-700 mb-8"></p>
+            <button id="restart-button" class="btn-primary w-full">Mulai Latihan Baru</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const allScreens = {
+            setup: document.getElementById('setup-screen'),
+            game: document.getElementById('game-screen'),
+            results: document.getElementById('results-screen')
+        };
+        
+        const startButton = document.getElementById('start-button');
+        const backButton = document.getElementById('back-button');
+        const restartButton = document.getElementById('restart-button');
+        const submitButton = document.getElementById('submit-button');
+
+        const gradeSelect = document.getElementById('grade-select');
+        const operationSelect = document.getElementById('operation-select');
+        
+        const levelInfoEl = document.getElementById('level-info');
+        const questionCounterEl = document.getElementById('question-counter');
+        const timerDotsContainer = document.getElementById('timer-dots-container');
+
+        const questionTextEl = document.getElementById('question-text');
+        const answerInput = document.getElementById('answer-input');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        const finalScoreEl = document.getElementById('final-score');
+        const finalMessageEl = document.getElementById('final-message');
+
+        // --- Game State & Config ---
+        let currentGrade, currentOperation, correctAnswer, synth;
+        let questionCounter, correctAnswersCounter, timerInterval;
+        const MAX_QUESTIONS = 10;
+
+        const settings = {
+            'tk': { max: 10, ops: ['addition', 'subtraction'] },
+            '1': { max: 20, multMax: 2, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed'] },
+            '2': { max: 50, multMax: 5, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed'] },
+            '3': { max: 100, multMax: 10, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed'] },
+            '4': { max: 250, multMax: 12, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed'] }
+        };
+
+        // --- Screen Management ---
+        function showScreen(screenName) {
+            for (const key in allScreens) {
+                allScreens[key].classList.add('hidden');
+            }
+            allScreens[screenName].classList.remove('hidden');
+        }
+
+        // --- Utility ---
+        const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+        // --- Timer Logic ---
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerDotsContainer.innerHTML = '';
+            if (currentGrade === 'tk') return;
+
+            const timeLimit = currentOperation === 'complex_mixed' ? 20 : 10;
+
+            for (let i = 0; i < timeLimit; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('w-3', 'h-3', 'bg-blue-400', 'rounded-full', 'transition-all', 'duration-500', 'mb-2');
+                timerDotsContainer.appendChild(dot);
+            }
+
+            let dots = Array.from(timerDotsContainer.children);
+            let timeLeft = timeLimit;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                if (dots.length > 0) {
+                    const dotToFade = dots.pop();
+                    dotToFade.classList.remove('bg-blue-400');
+                    dotToFade.classList.add('bg-gray-200');
+                }
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    generateQuestion();
+                }
+            }, 1000);
+        }
+
+        // --- Core Game Logic ---
+        function generateQuestion() {
+            clearInterval(timerInterval);
+            if (questionCounter >= MAX_QUESTIONS) {
+                showResults();
+                return;
+            }
+            questionCounter++;
+            questionCounterEl.textContent = `Soal ${questionCounter}/${MAX_QUESTIONS}`;
+            
+            answerInput.value = '';
+            answerInput.classList.remove('correct', 'incorrect');
+            answerInput.disabled = false;
+            submitButton.disabled = false;
+            feedbackMessage.textContent = '';
+            answerInput.focus();
+
+            const level = settings[currentGrade];
+            let operation = currentOperation;
+            if (operation === 'mixed') {
+                const availableOps = level.ops.filter(op => op !== 'mixed' && op !== 'complex_mixed');
+                operation = availableOps[getRandomInt(0, availableOps.length - 1)];
+            }
+            
+            let questionString = '';
+            switch (operation) {
+                case 'complex_mixed':
+                    // UPDATED: More robust and varied logic for complex mixed operations
+                    const formatType = getRandomInt(1, 2);
+                    let numA, numB, numC;
+
+                    if (formatType === 1) {
+                        // Format: A + (B × C) or A - (B × C)
+                        if (currentGrade === '2') {
+                            numA = getRandomInt(5, 20);
+                            numB = getRandomInt(2, 4);
+                            numC = getRandomInt(2, 5);
+                        } else {
+                            numA = getRandomInt(10, level.max / 2);
+                            numB = getRandomInt(2, level.multMax);
+                            numC = getRandomInt(2, 9);
+                        }
+                        const operators = ['+', '-'];
+                        const mainOp = operators[getRandomInt(0, 1)];
+                        const insideParentheses = numB * numC;
+
+                        questionString = `${numA} ${mainOp} (${numB} × ${numC})`;
+                        if (mainOp === '+') {
+                            correctAnswer = numA + insideParentheses;
+                        } else {
+                            correctAnswer = numA - insideParentheses;
+                        }
+                    } else {
+                        // Format: (A + B) × C or (A - B) × C
+                        if (currentGrade === '2') {
+                            numA = getRandomInt(5, 15);
+                            numB = getRandomInt(2, numA - 1);
+                            numC = getRandomInt(2, 4);
+                        } else {
+                            numA = getRandomInt(10, 20);
+                            numB = getRandomInt(2, numA - 1);
+                            numC = getRandomInt(2, level.multMax);
+                        }
+                        const operators = ['+', '-'];
+                        const mainOp = operators[getRandomInt(0, 1)];
+                        let insideParentheses;
+                        
+                        questionString = `(${numA} ${mainOp} ${numB}) × ${numC}`;
+                        if (mainOp === '+') {
+                            insideParentheses = numA + numB;
+                        } else {
+                            insideParentheses = numA - numB;
+                        }
+                        correctAnswer = insideParentheses * numC;
+                    }
+                    break;
+                case 'addition':
+                case 'subtraction':
+                case 'multiplication':
+                case 'division':
+                    let num1, num2, opSymbol;
+                    if(operation === 'addition') {
+                        opSymbol = '+';
+                        num1 = getRandomInt(1, level.max);
+                        num2 = getRandomInt(1, level.max);
+                        correctAnswer = num1 + num2;
+                    } else if (operation === 'subtraction') {
+                        opSymbol = '-';
+                        num1 = getRandomInt(1, level.max);
+                        num2 = getRandomInt(1, num1);
+                        correctAnswer = num1 - num2;
+                    } else if (operation === 'multiplication') {
+                        opSymbol = '×';
+                        num1 = getRandomInt(1, level.multMax);
+                        num2 = getRandomInt(1, 10);
+                        correctAnswer = num1 * num2;
+                    } else { // division
+                        opSymbol = '÷';
+                        const divisor = getRandomInt(2, level.multMax);
+                        const result = getRandomInt(2, 10);
+                        num1 = divisor * result;
+                        num2 = divisor;
+                        correctAnswer = result;
+                    }
+                    questionString = `${num1} ${opSymbol} ${num2}`;
+                    break;
+            }
+            questionTextEl.textContent = questionString;
+            startTimer();
+        }
+
+        function checkAnswer() {
+            const value = answerInput.value;
+            if (value === '' || value === '-') {
+                feedbackMessage.textContent = 'Silakan masukkan jawabanmu.';
+                return;
+            }
+            const userAnswer = parseInt(value, 10);
+            clearInterval(timerInterval);
+            answerInput.disabled = true;
+            submitButton.disabled = true;
+
+            if (userAnswer === correctAnswer) {
+                correctAnswersCounter++;
+                if (synth) synth.triggerAttackRelease("G5", "8n");
+                feedbackMessage.textContent = 'Benar! Hebat!';
+                feedbackMessage.classList.add('text-green-600');
+                answerInput.classList.add('correct');
+            } else {
+                feedbackMessage.textContent = `Jawaban yang benar adalah ${correctAnswer}`;
+                feedbackMessage.classList.remove('text-green-600');
+                answerInput.classList.add('incorrect');
+            }
+            setTimeout(generateQuestion, 1500);
+        }
+        
+        function showResults() {
+            showScreen('results');
+            const score = correctAnswersCounter * 10;
+            finalScoreEl.textContent = score;
+
+            if (synth) {
+                const now = Tone.now();
+                synth.triggerAttackRelease("C5", "8n", now);
+                synth.triggerAttackRelease("E5", "8n", now + 0.2);
+                synth.triggerAttackRelease("G5", "8n", now + 0.4);
+            }
+
+            let message = "Kerja bagus! Teruslah berlatih, kamu makin hebat setiap hari!";
+            if (score < 50) {
+                message = "Jangan menyerah! Setiap latihan membuatmu selangkah lebih maju.";
+            } else if (score >= 85) {
+                message = "Luar biasa! Kamu adalah juara matematika!";
+            }
+            finalMessageEl.textContent = message;
+        }
+
+        // --- Initializer ---
+        async function startGame() {
+            if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
+                await Tone.start();
+                synth = new Tone.Synth().toDestination();
+            }
+            currentGrade = gradeSelect.value;
+            currentOperation = operationSelect.value;
+            questionCounter = 0;
+            correctAnswersCounter = 0;
+
+            const gradeText = gradeSelect.options[gradeSelect.selectedIndex].text;
+            const opText = operationSelect.options[operationSelect.selectedIndex].text;
+            levelInfoEl.innerHTML = `<strong>Kelas:</strong> ${gradeText}<br><strong>Latihan:</strong> ${opText}`;
+
+            showScreen('game');
+            generateQuestion();
+        }
+
+        function updateOperationOptions() {
+            const grade = gradeSelect.value;
+            const isTK = grade === 'tk';
+            const isGrade1 = grade === '1';
+
+            document.querySelector('#operation-select option[value="multiplication"]').disabled = isTK;
+            document.querySelector('#operation-select option[value="division"]').disabled = isTK;
+            document.querySelector('#operation-select option[value="mixed"]').disabled = isTK;
+            document.querySelector('#operation-select option[value="complex_mixed"]').disabled = isTK || isGrade1;
+
+            if (operationSelect.options[operationSelect.selectedIndex].disabled) {
+                operationSelect.value = 'addition';
+            }
+        }
+
+        // --- Event Listeners ---
+        startButton.addEventListener('click', startGame);
+        backButton.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            showScreen('setup');
+        });
+        restartButton.addEventListener('click', () => showScreen('setup'));
+        submitButton.addEventListener('click', checkAnswer);
+
+        answerInput.addEventListener('input', () => {
+            let value = answerInput.value;
+            let sanitizedValue = value.replace(/[^-0-9]/g, '').replace(/(?!^)-/g, '');
+            if (sanitizedValue !== value) {
+                answerInput.value = sanitizedValue;
+            }
+        });
+        
+        answerInput.addEventListener('keydown', (e) => { 
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                checkAnswer();
+            }
+        });
+        
+        gradeSelect.addEventListener('change', updateOperationOptions);
+
+        // Initial setup
+        updateOperationOptions();
+        showScreen('setup');
+    </script>
+</body>
+</html>
