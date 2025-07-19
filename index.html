@@ -16,7 +16,7 @@
         }
         .card {
             background-color: white;
-            padding: 2rem;
+            padding: 1.5rem; /* Adjusted padding for smaller screens */
             border-radius: 1.5rem;
             box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
             transition: all 0.3s ease-in-out;
@@ -26,6 +26,7 @@
         @media (min-width: 640px) {
             .card {
                 max-width: 512px;
+                padding: 2rem; /* Restore padding for larger screens */
             }
             .card-lg {
                  max-width: 640px;
@@ -62,14 +63,15 @@
             color: white;
             font-weight: bold;
             border-radius: 0.75rem;
-            width: 50px;
-            height: 50px;
+            width: 48px; /* Adjusted size */
+            height: 48px; /* Adjusted size */
             font-size: 1.5rem;
             line-height: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: background-color 0.3s, transform 0.2s;
+            flex-shrink: 0;
         }
         .btn-submit:hover {
             background-color: #16a34a;
@@ -85,16 +87,28 @@
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
         }
-        .question-display { font-size: 2.5rem; sm:font-size: 3rem; font-weight: 700; color: #1f2937; }
-        .question-text-story { font-size: 1.5rem; font-weight: 500; color: #374151; line-height: 1.5; }
+        /* Fluid font size for responsive display */
+        .question-display { 
+            font-size: clamp(2rem, 10vw, 3rem); 
+            font-weight: 700; 
+            color: #1f2937; 
+        }
+        .question-text-story { 
+            font-size: clamp(1.1rem, 4.5vw, 1.5rem); 
+            font-weight: 500; 
+            color: #374151; 
+            line-height: 1.5; 
+        }
         .answer-input {
-            font-size: 2.5rem;
+            font-size: clamp(2rem, 9vw, 2.5rem);
             font-weight: 600;
             text-align: center;
             border-radius: 1rem;
             border: 2px solid #9ca3af;
             transition: all 0.3s ease-in-out;
-            width: 120px;
+            width: 40%; /* Use percentage for flexibility */
+            max-width: 140px;
+            min-width: 80px;
         }
         .answer-input:focus {
             outline: none;
@@ -104,33 +118,15 @@
         .answer-input.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; }
         .answer-input.incorrect { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; }
         .feedback-message { min-height: 1.5rem; }
-
-        #orientation-lock {
-            display: none;
-        }
-        @media only screen and (max-device-width: 1024px) and (orientation: portrait) {
-            #app-container {
-                display: none;
-            }
-            #orientation-lock {
-                display: flex;
-            }
-        }
     </style>
 </head>
 <body class="bg-sky-100">
-
-    <div id="orientation-lock" class="fixed inset-0 z-50 flex-col items-center justify-center text-center p-4 bg-white">
-        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500 mb-4"><rect x="2" y="6" width="20" height="12" rx="2"></rect></svg>
-        <h2 class="text-xl font-semibold text-gray-800">Harap Putar Perangkat Anda</h2>
-        <p class="text-gray-600 mt-2">Gunakan mode lanskap (mendatar) untuk pengalaman terbaik.</p>
-    </div>
 
     <div id="app-container" class="flex items-center justify-center min-h-screen p-4">
 
         <!-- Setup Screen -->
         <div id="setup-screen" class="card text-center mx-auto">
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">Selamat Datang!</h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Selamat Datang!</h1>
             <p class="text-gray-600 mb-8">Pilih jenjang kelas dan latihan yang kamu mau.</p>
             <div class="space-y-6">
                 <div>
@@ -151,9 +147,9 @@
                 </div>
             </div>
             <button id="start-button" class="btn-primary w-full mt-10">Mulai Belajar</button>
-            <div class="mt-4 space-x-4">
-                 <button id="show-multiplication-button" class="text-sm font-semibold text-blue-600 hover:text-blue-800">Lihat Tabel Perkalian</button>
-                 <button id="show-division-button" class="text-sm font-semibold text-blue-600 hover:text-blue-800">Lihat Tabel Pembagian</button>
+            <div class="mt-4 flex justify-center space-x-4">
+                 <button id="show-multiplication-button" class="text-sm font-semibold text-blue-600 hover:text-blue-800">Tabel Perkalian</button>
+                 <button id="show-division-button" class="text-sm font-semibold text-blue-600 hover:text-blue-800">Tabel Pembagian</button>
             </div>
         </div>
 
