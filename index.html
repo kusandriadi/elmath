@@ -30,6 +30,9 @@
             .card-lg {
                  max-width: 640px;
             }
+            .card-xl {
+                 max-width: 1024px;
+            }
         }
         .btn-primary {
             background-color: #3b82f6;
@@ -42,6 +45,17 @@
         .btn-primary:hover {
             background-color: #2563eb;
             transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            transition: background-color 0.3s;
+        }
+        .btn-secondary:hover {
+            background-color: #d1d5db;
         }
         .btn-submit {
             background-color: #22c55e;
@@ -142,6 +156,10 @@
                 </div>
             </div>
             <button id="start-button" class="btn-primary w-full mt-10">Mulai Belajar</button>
+            <div class="mt-4 space-x-4">
+                 <button id="show-multiplication-button" class="text-sm font-semibold text-blue-600 hover:text-blue-800">Lihat Tabel Perkalian</button>
+                 <button id="show-division-button" class="text-sm font-semibold text-blue-600 hover:text-blue-800">Lihat Tabel Pembagian</button>
+            </div>
         </div>
 
         <!-- Game Screen -->
@@ -171,6 +189,29 @@
             <p id="final-message" class="text-lg text-gray-700 mb-8"></p>
             <button id="restart-button" class="btn-primary w-full">Mulai Latihan Baru</button>
         </div>
+        
+        <!-- Multiplication Table Screen -->
+        <div id="multiplication-table-screen" class="hidden card card-xl text-center mx-auto">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Tabel Perkalian (1-10)</h2>
+            <div id="multiplication-table-container" class="text-left">
+                <!-- Tabel akan dibuat oleh JavaScript -->
+            </div>
+            <div class="text-center">
+                <button id="back-from-multiplication-button" class="btn-secondary mt-8">Kembali</button>
+            </div>
+        </div>
+        
+        <!-- Division Table Screen -->
+        <div id="division-table-screen" class="hidden card card-xl text-center mx-auto">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Tabel Pembagian (1-10)</h2>
+            <div id="division-table-container" class="text-left">
+                 <!-- Tabel akan dibuat oleh JavaScript -->
+            </div>
+            <div class="text-center">
+                <button id="back-from-division-button" class="btn-secondary mt-8">Kembali</button>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -178,13 +219,19 @@
         const allScreens = {
             setup: document.getElementById('setup-screen'),
             game: document.getElementById('game-screen'),
-            results: document.getElementById('results-screen')
+            results: document.getElementById('results-screen'),
+            multiplicationTable: document.getElementById('multiplication-table-screen'),
+            divisionTable: document.getElementById('division-table-screen')
         };
         
         const startButton = document.getElementById('start-button');
         const backButton = document.getElementById('back-button');
         const restartButton = document.getElementById('restart-button');
         const submitButton = document.getElementById('submit-button');
+        const showMultiplicationButton = document.getElementById('show-multiplication-button');
+        const backFromMultiplicationButton = document.getElementById('back-from-multiplication-button');
+        const showDivisionButton = document.getElementById('show-division-button');
+        const backFromDivisionButton = document.getElementById('back-from-division-button');
 
         const gradeSelect = document.getElementById('grade-select');
         const operationSelect = document.getElementById('operation-select');
@@ -218,6 +265,7 @@
             for (const key in allScreens) {
                 allScreens[key].classList.add('hidden');
             }
+            document.getElementById('app-container').className = "flex items-center justify-center min-h-screen p-4";
             allScreens[screenName].classList.remove('hidden');
         }
 
@@ -282,12 +330,10 @@
             let questionString = '';
             switch (operation) {
                 case 'complex_mixed':
-                    // UPDATED: More robust and varied logic for complex mixed operations
                     const formatType = getRandomInt(1, 2);
                     let numA, numB, numC;
 
                     if (formatType === 1) {
-                        // Format: A + (B × C) or A - (B × C)
                         if (currentGrade === '2') {
                             numA = getRandomInt(5, 20);
                             numB = getRandomInt(2, 4);
@@ -308,7 +354,6 @@
                             correctAnswer = numA - insideParentheses;
                         }
                     } else {
-                        // Format: (A + B) × C or (A - B) × C
                         if (currentGrade === '2') {
                             numA = getRandomInt(5, 15);
                             numB = getRandomInt(2, numA - 1);
@@ -412,6 +457,45 @@
             finalMessageEl.textContent = message;
         }
 
+        // --- Table Generators ---
+        function generateMultiplicationTable() {
+            const container = document.getElementById('multiplication-table-container');
+            const colors = ['bg-pink-400', 'bg-orange-400', 'bg-yellow-400', 'bg-lime-400', 'bg-green-400', 'bg-teal-400', 'bg-cyan-400', 'bg-indigo-400', 'bg-purple-400', 'bg-rose-400'];
+            let html = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">';
+            for (let i = 1; i <= 10; i++) {
+                const color = colors[i - 1];
+                html += `<div class="border rounded-lg overflow-hidden shadow-lg">`;
+                html += `<h3 class="font-bold text-xl text-center text-white ${color} py-2">${i}x</h3>`;
+                html += '<div class="p-4 space-y-1 text-base text-center">';
+                for (let j = 1; j <= 10; j++) {
+                    html += `<p>${i} × ${j} = ${i * j}</p>`;
+                }
+                html += '</div></div>';
+            }
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function generateDivisionTable() {
+            const container = document.getElementById('division-table-container');
+            const colors = ['bg-pink-400', 'bg-orange-400', 'bg-yellow-400', 'bg-lime-400', 'bg-green-400', 'bg-teal-400', 'bg-cyan-400', 'bg-indigo-400', 'bg-purple-400', 'bg-rose-400'];
+            let html = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">';
+            for (let i = 1; i <= 10; i++) {
+                const color = colors[i - 1];
+                html += `<div class="border rounded-lg overflow-hidden shadow-lg">`;
+                html += `<h3 class="font-bold text-xl text-center text-white ${color} py-2">÷ ${i}</h3>`;
+                html += '<div class="p-4 space-y-1 text-base text-center">';
+                for (let j = 1; j <= 10; j++) {
+                    const dividend = i * j;
+                    const quotient = j;
+                    html += `<p>${dividend} ÷ ${i} = ${quotient}</p>`;
+                }
+                html += '</div></div>';
+            }
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
         // --- Initializer ---
         async function startGame() {
             if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
@@ -454,6 +538,19 @@
         });
         restartButton.addEventListener('click', () => showScreen('setup'));
         submitButton.addEventListener('click', checkAnswer);
+
+        showMultiplicationButton.addEventListener('click', () => {
+            generateMultiplicationTable();
+            showScreen('multiplicationTable');
+        });
+        backFromMultiplicationButton.addEventListener('click', () => showScreen('setup'));
+        
+        showDivisionButton.addEventListener('click', () => {
+            generateDivisionTable();
+            showScreen('divisionTable');
+        });
+        backFromDivisionButton.addEventListener('click', () => showScreen('setup'));
+
 
         answerInput.addEventListener('input', () => {
             let value = answerInput.value;
