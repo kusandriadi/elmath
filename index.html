@@ -85,8 +85,8 @@
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
         }
-        .form-select option:disabled { color: #9ca3af; }
         .question-display { font-size: 2.5rem; sm:font-size: 3rem; font-weight: 700; color: #1f2937; }
+        .question-text-story { font-size: 1.5rem; font-weight: 500; color: #374151; line-height: 1.5; }
         .answer-input {
             font-size: 2.5rem;
             font-weight: 600;
@@ -144,14 +144,9 @@
                     </select>
                 </div>
                 <div>
-                    <label for="operation-select" class="block text-left font-semibold text-gray-700 mb-2">Pilih Operasi Hitung:</label>
+                    <label for="operation-select" class="block text-left font-semibold text-gray-700 mb-2">Pilihan Latihan:</label>
                     <select id="operation-select" class="form-select w-full">
-                        <option value="addition">Penambahan (+)</option>
-                        <option value="subtraction">Pengurangan (-)</option>
-                        <option value="multiplication">Perkalian (×)</option>
-                        <option value="division">Pembagian (÷)</option>
-                        <option value="mixed">Semua Operasi Hitungan</option>
-                        <option value="complex_mixed">Operasi Campuran</option>
+                        <!-- Options will be dynamically populated by JavaScript -->
                     </select>
                 </div>
             </div>
@@ -171,9 +166,13 @@
                 </div>
             </div>
             <div id="timer-dots-container" class="flex justify-center flex-wrap space-x-2 mb-6" style="min-height: 16px;"></div>
+            
+            <div id="question-container" class="bg-gray-50 p-4 rounded-lg mb-6 min-h-[100px] flex items-center justify-center">
+                 <span id="question-text" class="question-display"></span>
+            </div>
+
             <div class="flex items-center justify-center space-x-2 sm:space-x-4 md:space-x-6 mb-6">
-                <span id="question-text" class="question-display"></span>
-                <span class="question-display">=</span>
+                <span id="answer-label" class="text-2xl font-bold"></span>
                 <input type="text" id="answer-input" class="answer-input p-2" autofocus inputmode="numeric">
                 <button id="submit-button" class="btn-submit">✓</button>
             </div>
@@ -193,9 +192,7 @@
         <!-- Multiplication Table Screen -->
         <div id="multiplication-table-screen" class="hidden card card-xl text-center mx-auto">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Tabel Perkalian (1-10)</h2>
-            <div id="multiplication-table-container" class="text-left">
-                <!-- Tabel akan dibuat oleh JavaScript -->
-            </div>
+            <div id="multiplication-table-container" class="text-left"></div>
             <div class="text-center">
                 <button id="back-from-multiplication-button" class="btn-secondary mt-8">Kembali</button>
             </div>
@@ -204,9 +201,7 @@
         <!-- Division Table Screen -->
         <div id="division-table-screen" class="hidden card card-xl text-center mx-auto">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Tabel Pembagian (1-10)</h2>
-            <div id="division-table-container" class="text-left">
-                 <!-- Tabel akan dibuat oleh JavaScript -->
-            </div>
+            <div id="division-table-container" class="text-left"></div>
             <div class="text-center">
                 <button id="back-from-division-button" class="btn-secondary mt-8">Kembali</button>
             </div>
@@ -240,7 +235,9 @@
         const questionCounterEl = document.getElementById('question-counter');
         const timerDotsContainer = document.getElementById('timer-dots-container');
 
+        const questionContainer = document.getElementById('question-container');
         const questionTextEl = document.getElementById('question-text');
+        const answerLabelEl = document.getElementById('answer-label');
         const answerInput = document.getElementById('answer-input');
         const feedbackMessage = document.getElementById('feedback-message');
         
@@ -254,10 +251,20 @@
 
         const settings = {
             'tk': { max: 10, ops: ['addition', 'subtraction'] },
-            '1': { max: 20, multMax: 2, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed'] },
-            '2': { max: 50, multMax: 5, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed'] },
-            '3': { max: 100, multMax: 10, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed'] },
-            '4': { max: 250, multMax: 12, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed'] }
+            '1': { max: 20, multMax: 2, ops: ['addition', 'subtraction', 'story_problem'] },
+            '2': { max: 50, multMax: 5, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed', 'story_problem'] },
+            '3': { max: 100, multMax: 10, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed', 'story_problem'] },
+            '4': { max: 250, multMax: 12, ops: ['addition', 'subtraction', 'multiplication', 'division', 'mixed', 'complex_mixed', 'story_problem'] }
+        };
+        
+        const operationLabels = {
+            addition: 'Penambahan (+)',
+            subtraction: 'Pengurangan (-)',
+            multiplication: 'Perkalian (×)',
+            division: 'Pembagian (÷)',
+            mixed: 'Semua Operasi Hitungan',
+            complex_mixed: 'Operasi Campuran',
+            story_problem: 'Soal Cerita'
         };
 
         // --- Screen Management ---
@@ -271,6 +278,7 @@
 
         // --- Utility ---
         const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        const pickRandom = (arr) => arr[getRandomInt(0, arr.length - 1)];
 
         // --- Timer Logic ---
         function startTimer() {
@@ -278,7 +286,7 @@
             timerDotsContainer.innerHTML = '';
             if (currentGrade === 'tk') return;
 
-            const timeLimit = currentOperation === 'complex_mixed' ? 20 : 10;
+            const timeLimit = currentOperation === 'complex_mixed' || currentOperation === 'story_problem' ? 20 : 10;
 
             for (let i = 0; i < timeLimit; i++) {
                 const dot = document.createElement('div');
@@ -303,6 +311,69 @@
             }, 1000);
         }
 
+        // --- Story Problem Bank ---
+        const storyProblemBank = [
+            // Grade 1-2: Simple, 1 operation
+            (grade) => {
+                if (grade > 2) return null;
+                const names = ["Adi", "Bela", "Ciko", "Dina"];
+                const items = ["apel", "buku", "permen", "stiker"];
+                const num1 = getRandomInt(grade, grade * 4);
+                const num2 = getRandomInt(grade, grade * 3);
+                return {
+                    question: `${pickRandom(names)} punya ${num1} ${pickRandom(items)}. Ia diberi lagi ${num2} oleh ibunya. Berapa jumlahnya sekarang?`,
+                    answer: num1 + num2
+                };
+            },
+            (grade) => {
+                if (grade > 2) return null;
+                const names = ["Eka", "Fani", "Gita", "Hari"];
+                const items = ["kelereng", "balon", "kue", "roti"];
+                const num1 = getRandomInt(grade * 2, grade * 5);
+                const num2 = getRandomInt(grade, num1 - 1);
+                return {
+                    question: `${pickRandom(names)} memiliki ${num1} ${pickRandom(items)}. Sebanyak ${num2} diberikan kepada temannya. Berapa sisanya?`,
+                    answer: num1 - num2
+                };
+            },
+            // Grade 3-4: Complex, 2-3 operations
+            (grade) => {
+                if (grade < 3) return null;
+                const num1 = getRandomInt(10, 20);
+                const num2 = getRandomInt(5, 15);
+                const num3 = getRandomInt(2, 10);
+                return {
+                    question: `Di sebuah toko, ada ${num1} kotak pensil. Datang lagi kiriman sebanyak ${num2} kotak. Jika ${num3} kotak laku terjual, berapa sisa kotak pensil di toko?`,
+                    answer: (num1 + num2) - num3
+                };
+            },
+            (grade) => {
+                if (grade < 3) return null;
+                const numBoxes = getRandomInt(3, 6);
+                const itemsPerBox = getRandomInt(5, 10);
+                const numGiven = getRandomInt(2, 10);
+                return {
+                    question: `Paman membeli ${numBoxes} kotak donat. Setiap kotak berisi ${itemsPerBox} donat. Jika paman memberikan ${numGiven} donat kepada tetangga, berapa sisa donat paman?`,
+                    answer: (numBoxes * itemsPerBox) - numGiven
+                };
+            },
+             (grade) => {
+                if (grade < 4) return null; // Even harder, for grade 4
+                const redMarbles = getRandomInt(10, 20);
+                const blueMarbles = getRandomInt(10, 20);
+                const numFriends = getRandomInt(3, 5);
+                const totalMarbles = redMarbles + blueMarbles;
+                // Ensure total is divisible
+                const remainder = totalMarbles % numFriends;
+                const finalTotal = totalMarbles - remainder;
+
+                return {
+                    question: `Ada ${redMarbles} kelereng merah dan ${blueMarbles - remainder} kelereng biru. Semua kelereng itu akan dibagikan sama rata kepada ${numFriends} anak. Berapa kelereng yang didapat setiap anak?`,
+                    answer: finalTotal / numFriends
+                };
+            }
+        ];
+
         // --- Core Game Logic ---
         function generateQuestion() {
             clearInterval(timerInterval);
@@ -319,95 +390,78 @@
             submitButton.disabled = false;
             feedbackMessage.textContent = '';
             answerInput.focus();
+            
+            questionTextEl.className = 'question-display'; // Reset class
+            answerLabelEl.textContent = "";
+            questionContainer.className = 'min-h-[100px] flex items-center justify-center';
+
 
             const level = settings[currentGrade];
             let operation = currentOperation;
             if (operation === 'mixed') {
-                const availableOps = level.ops.filter(op => op !== 'mixed' && op !== 'complex_mixed');
-                operation = availableOps[getRandomInt(0, availableOps.length - 1)];
+                const availableOps = level.ops.filter(op => !['mixed', 'complex_mixed', 'story_problem'].includes(op));
+                operation = pickRandom(availableOps);
             }
             
             let questionString = '';
             switch (operation) {
+                case 'story_problem':
+                    questionTextEl.className = 'question-text-story';
+                    answerLabelEl.textContent = "Jawaban:";
+                    questionContainer.className = 'bg-gray-50 p-4 rounded-lg min-h-[100px] flex items-center justify-center';
+                    
+                    const availableGenerators = storyProblemBank.filter(gen => gen(parseInt(currentGrade)) !== null);
+                    const generator = pickRandom(availableGenerators);
+                    const storyQuestion = generator(parseInt(currentGrade));
+                    
+                    questionString = storyQuestion.question;
+                    correctAnswer = storyQuestion.answer;
+                    break;
                 case 'complex_mixed':
                     const formatType = getRandomInt(1, 2);
                     let numA, numB, numC;
 
                     if (formatType === 1) {
                         if (currentGrade === '2') {
-                            numA = getRandomInt(5, 20);
-                            numB = getRandomInt(2, 4);
-                            numC = getRandomInt(2, 5);
+                            numA = getRandomInt(5, 20); numB = getRandomInt(2, 4); numC = getRandomInt(2, 5);
                         } else {
-                            numA = getRandomInt(10, level.max / 2);
-                            numB = getRandomInt(2, level.multMax);
-                            numC = getRandomInt(2, 9);
+                            numA = getRandomInt(10, level.max / 2); numB = getRandomInt(2, level.multMax); numC = getRandomInt(2, 9);
                         }
-                        const operators = ['+', '-'];
-                        const mainOp = operators[getRandomInt(0, 1)];
+                        const mainOp = pickRandom(['+', '-']);
                         const insideParentheses = numB * numC;
-
                         questionString = `${numA} ${mainOp} (${numB} × ${numC})`;
-                        if (mainOp === '+') {
-                            correctAnswer = numA + insideParentheses;
-                        } else {
-                            correctAnswer = numA - insideParentheses;
-                        }
+                        correctAnswer = mainOp === '+' ? numA + insideParentheses : numA - insideParentheses;
                     } else {
                         if (currentGrade === '2') {
-                            numA = getRandomInt(5, 15);
-                            numB = getRandomInt(2, numA - 1);
-                            numC = getRandomInt(2, 4);
+                            numA = getRandomInt(5, 15); numB = getRandomInt(2, numA - 1); numC = getRandomInt(2, 4);
                         } else {
-                            numA = getRandomInt(10, 20);
-                            numB = getRandomInt(2, numA - 1);
-                            numC = getRandomInt(2, level.multMax);
+                            numA = getRandomInt(10, 20); numB = getRandomInt(2, numA - 1); numC = getRandomInt(2, level.multMax);
                         }
-                        const operators = ['+', '-'];
-                        const mainOp = operators[getRandomInt(0, 1)];
+                        const mainOp = pickRandom(['+', '-']);
                         let insideParentheses;
-                        
                         questionString = `(${numA} ${mainOp} ${numB}) × ${numC}`;
-                        if (mainOp === '+') {
-                            insideParentheses = numA + numB;
-                        } else {
-                            insideParentheses = numA - numB;
-                        }
+                        insideParentheses = mainOp === '+' ? numA + numB : numA - numB;
                         correctAnswer = insideParentheses * numC;
                     }
                     break;
-                case 'addition':
-                case 'subtraction':
-                case 'multiplication':
-                case 'division':
+                default:
                     let num1, num2, opSymbol;
                     if(operation === 'addition') {
-                        opSymbol = '+';
-                        num1 = getRandomInt(1, level.max);
-                        num2 = getRandomInt(1, level.max);
-                        correctAnswer = num1 + num2;
+                        opSymbol = '+'; num1 = getRandomInt(1, level.max); num2 = getRandomInt(1, level.max); correctAnswer = num1 + num2;
                     } else if (operation === 'subtraction') {
-                        opSymbol = '-';
-                        num1 = getRandomInt(1, level.max);
-                        num2 = getRandomInt(1, num1);
-                        correctAnswer = num1 - num2;
+                        opSymbol = '-'; num1 = getRandomInt(1, level.max); num2 = getRandomInt(1, num1); correctAnswer = num1 - num2;
                     } else if (operation === 'multiplication') {
-                        opSymbol = '×';
-                        num1 = getRandomInt(1, level.multMax);
-                        num2 = getRandomInt(1, 10);
-                        correctAnswer = num1 * num2;
+                        opSymbol = '×'; num1 = getRandomInt(1, level.multMax); num2 = getRandomInt(1, 10); correctAnswer = num1 * num2;
                     } else { // division
-                        opSymbol = '÷';
-                        const divisor = getRandomInt(2, level.multMax);
-                        const result = getRandomInt(2, 10);
-                        num1 = divisor * result;
-                        num2 = divisor;
-                        correctAnswer = result;
+                        opSymbol = '÷'; const divisor = getRandomInt(2, level.multMax); const result = getRandomInt(2, 10); num1 = divisor * result; num2 = divisor; correctAnswer = result;
                     }
                     questionString = `${num1} ${opSymbol} ${num2}`;
                     break;
             }
             questionTextEl.textContent = questionString;
+            if (operation !== 'story_problem') {
+                questionTextEl.innerHTML += ` <span class="question-display">=</span>`;
+            }
             startTimer();
         }
 
@@ -515,19 +569,21 @@
             generateQuestion();
         }
 
+        // UPDATED: Function to dynamically populate options
         function updateOperationOptions() {
-            const grade = gradeSelect.value;
-            const isTK = grade === 'tk';
-            const isGrade1 = grade === '1';
+            const selectedGrade = gradeSelect.value;
+            const availableOps = settings[selectedGrade].ops;
+            
+            // Clear current options
+            operationSelect.innerHTML = '';
 
-            document.querySelector('#operation-select option[value="multiplication"]').disabled = isTK;
-            document.querySelector('#operation-select option[value="division"]').disabled = isTK;
-            document.querySelector('#operation-select option[value="mixed"]').disabled = isTK;
-            document.querySelector('#operation-select option[value="complex_mixed"]').disabled = isTK || isGrade1;
-
-            if (operationSelect.options[operationSelect.selectedIndex].disabled) {
-                operationSelect.value = 'addition';
-            }
+            // Populate with available options
+            availableOps.forEach(opKey => {
+                const option = document.createElement('option');
+                option.value = opKey;
+                option.textContent = operationLabels[opKey];
+                operationSelect.appendChild(option);
+            });
         }
 
         // --- Event Listeners ---
@@ -550,7 +606,6 @@
             showScreen('divisionTable');
         });
         backFromDivisionButton.addEventListener('click', () => showScreen('setup'));
-
 
         answerInput.addEventListener('input', () => {
             let value = answerInput.value;
